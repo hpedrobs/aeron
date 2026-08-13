@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+        "target": "ES2020",
+        "module": "CommonJS",
+        "moduleResolution": "Node",
+        "outDir": "dist",
+        "rootDir": "src",
+        "esModuleInterop": true,
+        "strict": true,
+        "baseUrl": "./src",
+        "paths": {
+            "@utils/*": ["utils/*"],
+            "@services/*": ["services/*"],
+            "@models/*": ["models/*"],
+            "@jobs/*": ["jobs/*"],
+        }
+    },
+    "include": ["src"]
+}

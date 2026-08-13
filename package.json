@@ -1,0 +1,49 @@
+{
+    "name": "rpa-sefaz-cert",
+    "version": "1.0.0",
+    "description": "RPA que acessa o portal da SEFAZ com certificado digital para consultar e baixar notas fiscais de saída, automatizando downloads com segurança e eficiência, reduzindo erros e otimizando processos fiscais.",
+    "main": "dist/index.cjs",
+    "scripts": {
+        "dev:audit": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register src/index.ts -- audit",
+        "start:audit": "node dist/index.cjs audit",
+        "dev:queue": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register src/index.ts -- queue",
+        "start:queue": "node dist/index.cjs queue",
+        "dev:download": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register src/index.ts -- download",
+        "start:download": "node dist/index.cjs download",
+        "dev:report": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register src/index.ts -- report",
+        "start:report": "node dist/index.cjs report",
+        "build": "tsup",
+        "install": "npx playwright install",
+        "lint": "eslint . --ext .ts,.js --fix"
+    },
+    "author": "https://github.com/sbhenriquepedro",
+    "license": "MIT",
+    "dependencies": {
+        "@types/winston": "^2.4.4",
+        "adm-zip": "^0.6.0",
+        "axios": "^1.12.2",
+        "csv-writer": "^1.6.0",
+        "dotenv": "^17.2.2",
+        "exceljs": "^3.4.0",
+        "mongoose": "^8.18.2",
+        "playwright": "^1.55.0",
+        "ts-node": "^10.9.2",
+        "winston": "^3.17.0",
+        "yargs": "^17.7.2"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.37.0",
+        "@types/adm-zip": "^0.5.7",
+        "@types/exceljs": "^0.5.3",
+        "@types/mongoose": "^5.11.96",
+        "@types/node": "^24.4.0",
+        "@types/yargs": "^17.0.33",
+        "@typescript-eslint/eslint-plugin": "^8.46.0",
+        "@typescript-eslint/parser": "^8.46.0",
+        "eslint": "^9.37.0",
+        "ts-node-dev": "^2.0.0",
+        "tsconfig-paths": "^4.2.0",
+        "tsup": "^8.5.0",
+        "typescript": "^5.9.2"
+    }
+}
