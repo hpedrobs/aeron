@@ -40,8 +40,18 @@ export class QueueNoteJob {
             finalPeriod: Date
         }) => Promise<void | boolean>
     ) {
+        const isCanceledEnabled = env.CANCELADA === 'true'
+        const isAuthorizedEnabled = env.AUTORIZADA === 'true'
+
+        const shouldProcessAuthorized = !isCanceledEnabled || isAuthorizedEnabled
+        const shouldProcessCanceled = !isAuthorizedEnabled || isCanceledEnabled
+
+        const sitNotes: string[] = []
+        if (shouldProcessAuthorized) sitNotes.push('Autorizadas')
+        if (shouldProcessCanceled) sitNotes.push('Canceladas')
+
         for (const modelNote of  ['NF-e', 'NFC-e', 'CT-e']) {
-            for (const sitNote of ['Autorizadas', 'Canceladas']) {
+            for (const sitNote of sitNotes) {
                 for (const { initialPeriod, finalPeriod } of this.periods) {
                     const result = await callback({ modelNote, sitNote, initialPeriod, finalPeriod })
                     if (result === false) continue 

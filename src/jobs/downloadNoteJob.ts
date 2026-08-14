@@ -10,11 +10,27 @@ export class DownloadNoteJob {
 
     public async run(): Promise<void> {
         try {
+            const isCanceledEnabled = env.CANCELADA === 'true'
+            const isAuthorizedEnabled = env.AUTORIZADA === 'true'
+
+            const shouldProcessAuthorized = !isCanceledEnabled || isAuthorizedEnabled
+            const shouldProcessCanceled = !isAuthorizedEnabled || isCanceledEnabled
+
+            logger.info(`Regras de execução - Processar Autorizadas: ${shouldProcessAuthorized}, Processar Canceladas: ${shouldProcessCanceled}`)
+
             while (true) {
-                const notes = await Note.find({
+                const query: any = {
                     linkDownload: { $exists: true, $ne: "" },
                     statusNote: 'DonwloadPending'
-                }).populate('company')
+                }
+
+                if (shouldProcessAuthorized && !shouldProcessCanceled) {
+                    query.sitNote = 'Autorizadas'
+                } else if (shouldProcessCanceled && !shouldProcessAuthorized) {
+                    query.sitNote = 'Canceladas'
+                }
+
+                const notes = await Note.find(query).populate('company')
     
                 for (const note of notes) {
                     if (this.companiesToDownload && !this.companiesToDownload.includes(note.company.codeCompanieAccountSystem)) {
