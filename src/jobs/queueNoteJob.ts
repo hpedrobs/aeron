@@ -14,10 +14,10 @@ export class QueueNoteJob {
 
     private async eligibleCompanies(): Promise<ICompany[]> {
         const data = await Company.find({
-            $and: [
-                { stateRegistration: { $ne: "", $exists: true } },
-                { stateRegistration: { $ne: null, $exists: true } },
-            ],
+            // $and: [
+            //     { stateRegistration: { $ne: "", $exists: true } },
+            //     { stateRegistration: { $ne: null, $exists: true } },
+            // ],
             status: "A"
         })
 
