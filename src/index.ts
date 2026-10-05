@@ -2,8 +2,8 @@ import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
 
 import { AduitNoteJob } from '@jobs/AduitNoteJob'
-import { DownloadNoteJob } from '@jobs/DownloadNoteJob'
-import { QueueNoteJob } from '@jobs/QueueNoteJob'
+import { DownloadNoteJob } from '@jobs/downloadNoteJob'
+import { QueueNoteJob } from '@jobs/queueNoteJob'
 import { ReportNoteJob } from '@jobs/ReportNoteJob'
 
 import { ApiPfxManager } from '@utils/apiPfxManager'

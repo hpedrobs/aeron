@@ -91,42 +91,61 @@ export class QueueNoteJob {
 
         await this.createNoteNonexistent(company)
 
+        const today = new Date()
+        const currentDay = today.getDate()
+        const isInitialMonthWindow = [1, 2, 3, 4, 5].includes(currentDay)
+        const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0)
+
         await this.forEachCombination(async ({ modelNote, sitNote, initialPeriod, finalPeriod }) => {
             try {
-                const note = await Note.findOne({
+                let note = await Note.findOne({
                     company: company._id,
                     sitNote, modelNote,
                     initialPeriod, finalPeriod
                 }).populate('company')
                 
-                if (note != null && status.includes(note.statusNote)) {
-                    logger.info('----------------------------------------')
-                    logger.info(`Empresa: ${company.name} (${company.codeCompanieAccountSystem}),`)
-                    logger.info(`Modelo: ${modelNote},`)
-                    logger.info(`Situação: ${sitNote},`)
-                    logger.info(`Periodo: ${initialPeriod.toLocaleDateString()} - ${finalPeriod.toLocaleDateString()}.`)
-                    
-                    const apiPfxManager = new ApiPfxManager()
-                    await apiPfxManager.clearCertificates()
+                if (note != null) {
+                    const isPreviousMonth = initialPeriod.getMonth() !== today.getMonth() || initialPeriod.getFullYear() !== today.getFullYear()
+                    const updatedBeforeToday = note.updatedAt ? new Date(note.updatedAt) < startOfToday : true
 
-                    if (company.federalRegistration) {
-                        const isCertificate = await apiPfxManager.installCertificate(company.federalRegistration)
-                        if (isCertificate) {
-                            const noteService = new NoteService(note)
-                            await noteService.setDownloadLink()
+                    // Na virada do mês (dias 1 a 5), se a nota do mês anterior já foi processada em dias anteriores (updatedAt < hoje),
+                    // reabre o status para 'Pending' para garantir que eventuais novas notas ou alterações sejam capturadas hoje.
+                    if (isInitialMonthWindow && isPreviousMonth && updatedBeforeToday && (note.statusNote === 'Downloaded' || note.statusNote === 'Warning')) {
+                        logger.info('----------------------------------------')
+                        logger.info(`[Virada de Mês] Reabrindo fila diária do mês anterior para a empresa ${company.name} (${company.codeCompanieAccountSystem}) - ${modelNote} (${sitNote}).`)
+                        await Note.findByIdAndUpdate(note._id, { statusNote: 'Pending' })
+                        note.statusNote = 'Pending'
+                    }
+
+                    if (status.includes(note.statusNote)) {
+                        logger.info('----------------------------------------')
+                        logger.info(`Empresa: ${company.name} (${company.codeCompanieAccountSystem}),`)
+                        logger.info(`Modelo: ${modelNote},`)
+                        logger.info(`Situação: ${sitNote},`)
+                        logger.info(`Periodo: ${initialPeriod.toLocaleDateString()} - ${finalPeriod.toLocaleDateString()}.`)
+                        
+                        const apiPfxManager = new ApiPfxManager()
+                        await apiPfxManager.clearCertificates()
+
+                        if (company.federalRegistration) {
+                            const isCertificate = await apiPfxManager.installCertificate(company.federalRegistration)
+                            if (isCertificate) {
+                                const noteService = new NoteService(note)
+                                await noteService.setDownloadLink()
+                            } else {
+                                logger.error(`Falha ao instalar o certificado para a empresa ${company.name} (${company.codeCompanieAccountSystem}). Pulando...`)
+                                await Note.findOneAndUpdate({
+                                    company: company._id,
+                                    sitNote, modelNote,
+                                    initialPeriod, finalPeriod
+                                }, {
+                                    statusNote: 'Error',
+                                    warn: `Falha ao instalar o certificado`,
+                                })
+                            }
                         } else {
-                            logger.error(`Falha ao instalar o certificado para a empresa ${company.name} (${company.codeCompanieAccountSystem}). Pulando...`)
-                            await Note.findOneAndUpdate({
-                                company: company._id,
-                                sitNote, modelNote,
-                                initialPeriod, finalPeriod
-                            }, {
-                                statusNote: 'Error',
-                                warn: `Falha ao instalar o certificado`,
-                            })
+                            await Note.findByIdAndUpdate(note._id, { statusNote: 'Error', warn: `Empresa sem CNPJ (${company.federalRegistration}).` })
                         }
-                    } else {
-                        await Note.findByIdAndUpdate(note._id, { statusNote: 'Error', warn: `Empresa sem CNPJ (${company.federalRegistration}).` })
                     }
                 }
             } catch (error) {
